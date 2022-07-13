@@ -13,22 +13,21 @@ The model is described in the paper [MyPyPSA-Ger: Introducing CO2 taxes on a mul
 # Installation 
 
 ## Clone the Repository 
+
 /some/other/path % cd /some/path/without/spaces
 
 /some/path/without/spaces % git clone https://github.com/AnasAbuzayed/MyPyPSA-Ger.git
 
 
 ## Install the Library
+
 %cd MyPyPSA-Ger
+
 conda install --name MyPyPSA-Ger --file req.txt
-
-
-## Install the Library
-% cd MyPyPSA-Ger
-% conda install --name MyPyPSA-Ger --file req.txt
 
 ## Use the Model
 % conda activate MyPyPSA-Ger
+
 % python Model.py
 
 Enter the Network Name & Regional Potential Value
