@@ -32,5 +32,7 @@ conda install --name MyPyPSA-Ger --file req.txt
 % python Model.py
 
 Enter the Network Name & Regional Potential Value
-The main network for the model is created through [PyPSA-Eur](https://github.com/PyPSA/pypsa-eur).
+The main network for the model is created through [PyPSA-Eur](https://github.com/PyPSA/pypsa-eur). After obtaining the network, the model MyPyPSA-Ger can be further used
+
+![image](https://user-images.githubusercontent.com/60949903/178725004-1464261c-2a74-49a5-abeb-fba698463fef.png)
 
