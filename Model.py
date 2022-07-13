@@ -102,10 +102,10 @@ phase_out_removal_lignite,yearly_phase_out_lignite=Myopic.Phase_out(n,'lignite',
 n.storage_units.p_nom_extendable=False ##To dobule check
 
 
-co2lims = pd.read_csv('co2limits.csv') ##co2lims = pd.read_csv('co2limits.csv')
-cost_factors= pd.read_csv('Cost_Factor.csv', index_col=0, header=0)
-fuel_cost= pd.read_csv('fuel_cost.csv', index_col=0, header=0)
-co2price = pd.read_csv('co2_price.csv', index_col=0)
+co2lims = pd.read_csv('data/co2limits.csv') ##co2lims = pd.read_csv('co2limits.csv')
+cost_factors= pd.read_csv('data/Cost_Factor.csv', index_col=0, header=0)
+fuel_cost= pd.read_csv('data/fuel_cost.csv', index_col=0, header=0)
+co2price = pd.read_csv('data/co2_price.csv', index_col=0)
 
 """
 Logger
