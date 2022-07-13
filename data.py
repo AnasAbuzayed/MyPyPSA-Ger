@@ -129,8 +129,11 @@ def Biomass_data (n,name):
 
 
 def RES_data(n,name):
-        
-    data=pd.read_csv('data/renewable_power_plants_DE.csv')
+    if os.path.exists('data/renewable_power_plants_DE.csv'):
+        data=pd.read_csv('data/renewable_power_plants_DE.csv')
+    else:
+        URL= 'https://zenodo.org/record/6826283/files/renewable_power_plants_DE.csv?download=1'
+        pd.read_csv(URL)
     data=data[['commissioning_date','decommissioning_date','technology','electrical_capacity','lat','lon']]
     data.columns=['year_added','year_removed','carrier','p_nom','latitude','longitude']
     data.carrier=data.carrier.replace('Photovoltaics', 'solar')
