@@ -18,7 +18,7 @@ def Biomass_data (n,name):
     if os.path.exists('{}/bio_basic_removal.csv'.format(name)):
         remove=pd.read_csv('{}/bio_basic_removal.csv'.format(name),index_col=0)
     else:
-        data=pd.read_csv('renewable_power_plants_DE_bio.csv')
+        data=pd.read_csv('data/renewable_power_plants_DE_bio.csv')
         data=data[['commissioning_date','decommissioning_date','technology','electrical_capacity','lat','lon']]
         data.columns=['year_added','year_removed','carrier','p_nom','latitude','longitude']
         data.carrier=data.carrier.replace('Sewage and landfill gas', 'biomass')
@@ -130,7 +130,7 @@ def Biomass_data (n,name):
 
 def RES_data(n,name):
         
-    data=pd.read_csv('renewable_power_plants_DE.csv')
+    data=pd.read_csv('data/renewable_power_plants_DE.csv')
     data=data[['commissioning_date','decommissioning_date','technology','electrical_capacity','lat','lon']]
     data.columns=['year_added','year_removed','carrier','p_nom','latitude','longitude']
     data.carrier=data.carrier.replace('Photovoltaics', 'solar')
@@ -200,7 +200,7 @@ def RES_data(n,name):
     data.index=range(len(data))
 
     ### 2019 data
-    df2=pd.read_csv('renewable_power_plants_DE_2019.csv')
+    df2=pd.read_csv('data/renewable_power_plants_DE_2019.csv')
     df2=df2[['commissioning_date','decommissioning_date','technology','electrical_capacity','lat','lon']]
     df2.columns=['year_added','year_removed','carrier','p_nom','latitude','longitude']
     df2.carrier=df2.carrier.replace('Photovoltaics', 'solar')
@@ -334,7 +334,7 @@ def RES_data(n,name):
 
     
 def Correct_coal(n,name):
-    data = pd.read_csv('conventional_power_plants_DE.csv')
+    data = pd.read_csv('data/conventional_power_plants_DE.csv')
     data =data [['capacity_net_bnetza','energy_source','commissioned','retrofit','status','lat','lon']]
     data=data.rename(columns={"capacity_net_bnetza": "p_nom", "energy_source": "carrier"})
     data.drop(data[data.carrier !='Hard coal'].index, inplace=True)
@@ -398,7 +398,7 @@ def Correct_coal(n,name):
     return data
 
 def Base_Removal_Data(n):
-    data = pd.read_csv('ppl.csv')
+    data = pd.read_csv('data/ppl.csv')
     df1 = data[data.carrier == 'hydro']
     df2 = data[data.carrier != 'hydro']
     df1.drop(df1[df1.technology !='Run-Of-River'].index, inplace=True)
