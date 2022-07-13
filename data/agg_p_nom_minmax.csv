@@ -1,0 +1,9 @@
+country,carrier,min,max
+DE,onwind,,50000
+DE,offwind-ac,,50000
+DE,solar,,50000
+DE,offwind-dc,,50000
+DE,CCGT,,6000
+DE,OCGT,,6000
+DE,H2,,22000
+DE,battery,,22000
