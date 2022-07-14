@@ -9,6 +9,8 @@ from numpy import pi as pi
 from numpy import sin as sin
 from numpy import cos as cos 
 from numpy import arccos as arccos
+import json
+import time
 
 print('enter data network name')
 network_name=  str(input())
@@ -129,11 +131,13 @@ def Biomass_data (n,name):
 
 
 def RES_data(n,name):
+    
     if os.path.exists('data/renewable_power_plants_DE.csv'):
         data=pd.read_csv('data/renewable_power_plants_DE.csv')
     else:
         URL= 'https://zenodo.org/record/6826283/files/renewable_power_plants_DE.csv?download=1'
-        pd.read_csv(URL)
+        data=pd.read_csv(URL)
+        data.to_csv('data/renewable_power_plants_DE.csv')
     data=data[['commissioning_date','decommissioning_date','technology','electrical_capacity','lat','lon']]
     data.columns=['year_added','year_removed','carrier','p_nom','latitude','longitude']
     data.carrier=data.carrier.replace('Photovoltaics', 'solar')

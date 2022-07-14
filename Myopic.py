@@ -20,18 +20,10 @@ Created on Sun May  10 02:18:04 2020
 import pandas as pd
 import pypsa
 import data
-
-#print('enter network name')
 network_name=data.network_name
-#network_name=  str(input())
 
 print('enter regional potential value')
 regional_potential=int(input())
-
-
-n = pypsa.Network(network_name)
-
-saved_potential=n.generators.p_nom_max[n.generators.p_nom_extendable==True]
 
 def update_load(n,factor):
     for i in range(len(n.loads_t.p_set.columns)):
@@ -40,19 +32,11 @@ def update_load(n,factor):
 def update_cost(n,year,cost_factors,fuel_cost):
     
     #Generators
-    solar=cost_factors['solar'].loc[year]
-    offwind=cost_factors['offwind'].loc[year]
-    onwind=cost_factors['onwind'].loc[year]
-    
-    n.generators.capital_cost[n.generators.carrier=='offwind-dc']= n.generators.capital_cost*offwind
-    n.generators.capital_cost[n.generators.carrier=='offwind-ac']= n.generators.capital_cost*offwind
-    n.generators.capital_cost[n.generators.carrier=='solar']= n.generators.capital_cost*solar
-    n.generators.capital_cost[n.generators.carrier=='onwind']= n.generators.capital_cost*onwind
-    
-    n.generators.marginal_cost[n.generators.carrier=='offwind-dc']= n.generators.marginal_cost*offwind
-    n.generators.marginal_cost[n.generators.carrier=='offwind-ac']= n.generators.marginal_cost*offwind
-    n.generators.marginal_cost[n.generators.carrier=='solar']= n.generators.marginal_cost*solar
-    n.generators.marginal_cost[n.generators.carrier=='onwind']= n.generators.marginal_cost*onwind
+    for tech in cost_factors.columns:
+        n.generators.capital_cost[n.generators.carrier==tech]*= cost_factors[tech].loc[year]
+        n.generators.marginal_cost[n.generators.carrier==tech]*= cost_factors[tech].loc[year]
+        n.storage_units.capital_cost[n.storage_units.carrier==tech]*= cost_factors[tech].loc[year]
+        n.storage_units.marginal_cost[n.storage_units.carrier==tech]*= cost_factors[tech].loc[year]
 
 #    n.generators.marginal_cost= n.generators.marginal_cost*0.99 ## TODO: Decrease only RES, seperate for carriers
     # Fuel
@@ -209,7 +193,7 @@ def append_gens(n,year,df):
     return df
 
 
-def delete_gens(n,year,df):
+def delete_gens(n,year,df,saved_potential):
     wanted=df[{'bus','p_nom'}][df.year_removed==year]
     for i in range(len(wanted.index)):
         print(i)
@@ -223,7 +207,7 @@ def delete_gens(n,year,df):
             n.generators.loc['Fixed ' + wanted.index[i], 'p_nom'] = 0
 
 
-def delete_original_RES(n,year,df):
+def delete_original_RES(n,year,df,saved_potential):
     wanted=df[{'bus','p_nom'}][df.year_removed==year]
     for i in range(len(wanted.index)):
         print(i)

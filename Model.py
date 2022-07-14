@@ -20,7 +20,7 @@ Created on Sun May  10 02:18:04 2020
 
 import time
 import sys
-sys.path.insert(0, "C:/Users/aabuzay1/Desktop/Pypsa-eur/pypsa-eur-master/scripts/")
+sys.path.insert(0, "./pypsa-eur/scripts/")
 import os
 import pypsa
 import pandas as pd
@@ -66,7 +66,7 @@ Start the Myopic Process
 
 
 
-with open(r'config.yaml') as file:
+with open(r'pypsa-eur/config.yaml') as file:
     # The FullLoader parameter handles the conversion from YAML
     # scalar values to Python the dictionary format
     config= yaml.load(file, Loader=yaml.FullLoader)
@@ -82,17 +82,17 @@ solve_opts = config['solving']['options']
 
 #print('enter network name')
 network_name=data.network_name
-print('enter regional potential value')
 regional_potential=Myopic.regional_potential
 #scenario_name
 name=network_name[:-3]
 base.createFolder(network_name[:-3])
 
-n = pypsa.Network(network_name)
+
+n = pypsa.Network('pypsa-eur/results/networks/'+network_name)
 data.update_rens_profiles(n,2013)
 resample_factor=int(8760/len(n.snapshots))
 
-data.resample_gen_profiles(n,net_name=network_name.replace('{}H'.format(resample_factor),'1H'),
+data.resample_gen_profiles(n,net_name=network_name.replace('{}H'.format(resample_factor),'1H')[:-3],
                       resample_factor=resample_factor)
 
 
@@ -201,8 +201,8 @@ years_cols=list(range(2021,2051))
 Potentials_over_years=pd.DataFrame({'2020':saved_potential})
 Potentials_over_years=Potentials_over_years.reindex(columns=Potentials_over_years.columns.tolist() + years_cols)
 
+
 obj.append(n.objective)
-networks=[]
 
 for i in range(2021,2051):#2051:
     print(i)
@@ -219,13 +219,12 @@ for i in range(2021,2051):#2051:
 
     gen_bar=plotting.Gen_Bar(n,gen_bar,i-1)
     inst_bar=plotting.Inst_Bar(n,inst_bar,i-1)
-    networks.append(n)
     n.export_to_netcdf('{}/{}.nc'.format(name,i-1))
     # n=pypsa.Network('{}/{}.nc'.format(name,i-1))
     Myopic.update_cost(n,i,cost_factors,fuel_cost=fuel_cost)
     Myopic.update_load(n,1.01)
-    Myopic.delete_gens(n,i,df)
-    Myopic.delete_original_RES(n,i,renewables)
+    Myopic.delete_gens(n,i,df,saved_potential)
+    Myopic.delete_original_RES(n,i,renewables,saved_potential)
     Myopic.delete_old_gens(n,i,conventional_base)
     
     set_line_s_max_pu(n)
@@ -250,29 +249,11 @@ gen_bar=plotting.Gen_Bar(n,gen_bar,i)
 inst_bar=plotting.Inst_Bar(n,inst_bar,i)
 plotting.Country_Map(n,year=i)
 
-plotting.Bar_to_PNG(gen_bar,name,'Generation')
-plotting.Bar_to_PNG(inst_bar,name,'Installation')
-networks.append(n)
+plotting.Bar_to_PNG(n,gen_bar,name,'Generation')
+plotting.Bar_to_PNG(n,inst_bar,name,'Installation')
 n.export_to_netcdf('{}/{}.nc'.format(name,i))
 df.to_excel("{}/addition.xlsx".format(name), index = True)
 
 objective=pd.DataFrame({'year':list(range(2020,2051)) , 'objective':obj,'RES_mix':ren_perc})
 objective.to_excel("{}/objective.xlsx".format(name), index = False)
 Potentials_over_years.to_excel("{}/Potentials_over_years.xlsx".format(name), index = True)
-
-""" Snakemake"""
-
-#objective.to_excel(snakemake.output[0], index = False)
-
-#
-#n.results.Solver()['Termination condition'].value
-#n.results.Solver()['Status'].value
-
-#
-##
-#### TODO: Add export network options
-##years=np.arange(2019,2051,1)
-##results=pd.DataFrame({'year':years, 'Renewable_share': ren_perc, 'objective': obj})
-##results.to_excel("results.xlsx", index = False)
-##
-#

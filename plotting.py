@@ -38,15 +38,10 @@ with open(r'config.yaml') as file:
     # The FullLoader parameter handles the conversion from YAML
     # scalar values to Python the dictionary format
     config= yaml.load(file, Loader=yaml.FullLoader)
-
-
-#print('enter network name')
-#network_name=  str(input())
+    
 network_name=data.network_name
 
 name=network_name[:-3]
-
-n = pypsa.Network(network_name)
 
 def colors_map(data):
     df=pd.DataFrame({'carrier':['CCGT','OCGT','biomass','coal','lignite','nuclear','offwind-ac',
@@ -164,7 +159,7 @@ def Inst_Bar(n,bar,year):
 
     return bar
 
-def Bar_to_PNG(bar,name,bar_type):
+def Bar_to_PNG(n,bar,name,bar_type):
     
 #    bar=bar.sort_index(axis=0,ascending=True)
     
@@ -202,55 +197,6 @@ def Bar_to_PNG(bar,name,bar_type):
     bar.to_csv('{}/{}_Bar.csv'.format(name,bar_type))
 
     
-def Generation_BarChart(name):
-    networks_names=(glob.glob("{}/*.nc".format(name)))
-    n=pypsa.Network(networks_names[0]) ### TODO: try a better way
-    carriers=list(dict.fromkeys(n.generators.carrier))
-    
-    years=[]
-    for i in networks_names:
-        years.append(i[-7:-3])
-    
-    bar= pd.DataFrame(index = years,columns=carriers)
-    
-    for k in range(len(networks_names)):
-        print(networks_names[k])
-        print(years[k])
-    
-        n=pypsa.Network(networks_names[k]) 
-        p_by_carrier = n.generators_t.p.sum()
-        val=[]
-        typ=[]
-        for i in range(len(p_by_carrier)):
-            val.append(p_by_carrier[i])
-            typ.append(re.split('\s+', p_by_carrier.index[i])[len(re.split('\s+', p_by_carrier.index[i]))-1])
-        nnam=list(dict.fromkeys(typ))
-        new_gen= []
-        
-        for i in range(len(nnam)):
-            x=0
-            for j in range(len(val)):
-                if typ[j]==nnam[i]:
-                    x=x+val[j]
-            new_gen.append(x)
-        
-        new_gen=pd.DataFrame(new_gen, index=nnam)
-        
-        for p in range(len(new_gen.index)):
-            bar.loc[years[k],new_gen.index[p]]=new_gen.loc[new_gen.index[p]][0]/10**6
-    
-    bar=bar.sort_index(axis=0,ascending=True)
-    colors = colors_map(pd.DataFrame(index=bar.columns))
-
-    ax = bar.plot(figsize=(40, 10),kind='bar', stacked=True,color=colors,fontsize=15)
-    ax.set_xlabel("Years",fontsize=15)
-    ax.set_ylabel("Generation [TWh]",fontsize=15)
-    ax.grid()
-    ax.set_title('Generation shares {}'.format(name),fontsize=30)
-    plt.savefig('{}/Generation Bar Plot {}'.format(name,name), pi=1600, bbox_inches='tight')
-    bar.to_csv('{}/Generation_Bar.csv'.format(name))
-
-    return bar
 
 def Country_Map(n,year):
     opts = config['plotting']
@@ -322,39 +268,4 @@ def Country_Map(n,year):
   #  plt.show()
 
 
-def Installation_BarChart(name):
-    networks_names=(glob.glob("{}/*.nc".format(name)))
-    n=pypsa.Network(networks_names[0]) ### TODO: try a better way
-    years=[]
-    for i in networks_names:
-        years.append(i[-7:-3])
-    
-    df=pd.DataFrame({'p_nom':n.generators.p_nom,'carrier':n.generators.carrier})
-    summation=df.groupby('carrier').sum()
-
-    bar= pd.DataFrame(index = years,columns=summation.index)
-    
-    for k in range(len(networks_names)):
-        print(networks_names[k])
-        print(years[k])
-    
-        n=pypsa.Network(networks_names[k]) 
-        df=pd.DataFrame({'p_nom':n.generators.p_nom,'carrier':n.generators.carrier})
-        summation=df.groupby('carrier').sum()
-        for p in range(len(summation.index)):
-            bar.loc[years[k],summation.index[p]]=summation.loc[summation.index[p]][0]/10**3
-
-    bar=bar.sort_index(axis=0,ascending=True)
-    colors = colors_map(pd.DataFrame(index=bar.columns))
-    ax = bar.plot(figsize=(40, 10),kind='bar', stacked=True,color=colors,fontsize=15)
-    ax.set_xlabel("Years",fontsize=15)
-    ax.set_ylabel("Installation [GW]",fontsize=15)
-    ax.grid()
-    ax.set_title('Installation shares {}'.format(name),fontsize=30)
-    plt.savefig('{}/Installation Bar Plot {}'.format(name,name), pi=1600, bbox_inches='tight')
-    
-    bar.to_csv('{}/Installation_Bar.csv'.format(name))
-
-    return bar
-    
 

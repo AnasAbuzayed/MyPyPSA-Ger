@@ -7,6 +7,7 @@ import data
 network_name=data.network_name
 name=network_name[:-3]
 
+
 def createFolder(directory):
     try:
         if not os.path.exists(directory):
