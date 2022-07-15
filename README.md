@@ -26,13 +26,13 @@ The model is described in the paper [MyPyPSA-Ger: Introducing CO2 taxes on a mul
 % conda create --name MyPyPSA-Ger --file req.txt
 
 ## Use the Model
-1. To use the model, first we need to create the base network using [PyPSA-Eur](https://github.com/PyPSA/pypsa-eur). You need to install the cutouts and data to be used in the model, either by running the code below or manually from [Zenodo](https://zenodo.org/record/6827030#.YtFzv3bP1zo).
+### 1. To use the model, first we need to create the base network using [PyPSA-Eur](https://github.com/PyPSA/pypsa-eur). You need to install the cutouts and data to be used in the model, either by running the code below or manually from [Zenodo](https://zenodo.org/record/6827030#.YtFzv3bP1zo).
 
 % cd MyPyPSA-Ger
 
 % python pypsa-eur-data.py
 
-2. To create the base network, clone into the pypsa-eur folder and create a network using the workflow management system "snakemake". For more details about how it works refer to the PyPSA-Eur documentation [here](https://pypsa-eur.readthedocs.io/en/latest/tutorial.html). The following code gives an example how to create the base network. The base network is built and tested using PyPSA-Eur V0.2.0, the current PyPSA-Eur version will be tested with MyPyPSA-Ger later on. 
+### 2. To create the base network, clone into the pypsa-eur folder and create a network using the workflow management system "snakemake". For more details about how it works refer to the PyPSA-Eur documentation [here](https://pypsa-eur.readthedocs.io/en/latest/tutorial.html). The following code gives an example how to create the base network. The base network is built and tested using PyPSA-Eur V0.2.0, the current PyPSA-Eur version will be tested with MyPyPSA-Ger later on. 
 
 ![image](https://user-images.githubusercontent.com/60949903/178725004-1464261c-2a74-49a5-abeb-fba698463fef.png)
 
@@ -44,7 +44,7 @@ The model is described in the paper [MyPyPSA-Ger: Introducing CO2 taxes on a mul
 
 The resulted network will now be in the path MyPyPSA-Ger/pypsa-eur/results/networks.
 
-3. Run MyPyPSA-Ger model
+### 3. Run MyPyPSA-Ger model
 
 % cd ..
 
