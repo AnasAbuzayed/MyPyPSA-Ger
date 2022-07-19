@@ -3,7 +3,7 @@ MyPyPSA-Ger
 
 MyPyPSA-Ger, a myopic optimization model developed to represent the German energy system with a detailed mapping of the electricity sector, on a highly disaggregated level, spatially and temporally, with regional differences and investment limitations.
 
-MyPyPSA-Ger was developed by [EEW group](https://ines.hs-offenburg.de/forschung/energiesysteme-und-energiewirtschaft) at [Hochschule Offenburg] (https://www.hs-offenburg.de/). MyPyPSA-Ger model is built using the Modeling Framework [PyPSA](https://github.com/PyPSA/pypsa), and upon [PyPSA-Eur](https://github.com/PyPSA/pypsa-eur).
+MyPyPSA-Ger was developed by [EEW group](https://ines.hs-offenburg.de/forschung/energiesysteme-und-energiewirtschaft) at [Hochschule Offenburg](https://www.hs-offenburg.de/) . MyPyPSA-Ger model is built using the Modeling Framework [PyPSA](https://github.com/PyPSA/pypsa), and upon [PyPSA-Eur](https://github.com/PyPSA/pypsa-eur).
 
 The model is described in the paper [MyPyPSA-Ger: Introducing CO2 taxes on a multi-regional myopic roadmap of the German electricity system towards achieving the 1.5 °C target by 2050](https://www.sciencedirect.com/science/article/pii/S0306261922000587)
 
