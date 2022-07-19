@@ -1,5 +1,6 @@
 # MyPyPSA-Ger
-MyPyPSA-Ger
+![1-s2 0-S0306261922000587-gr8_lrg](https://user-images.githubusercontent.com/60949903/179805438-f593a866-a2a9-4bd9-b0a4-33075f7bd344.jpg)
+
 
 MyPyPSA-Ger, a myopic optimization model developed to represent the German energy system with a detailed mapping of the electricity sector, on a highly disaggregated level, spatially and temporally, with regional differences and investment limitations.
 
