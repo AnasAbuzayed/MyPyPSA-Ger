@@ -1,0 +1,11 @@
+,p_nom,carrier,bus
+DE0 1 offwind-ac,382.694,offwind-ac,DE0 1
+DE0 2 offwind-ac,3151.792,offwind-ac,DE0 2
+DE0 1 offwind-dc,376.464,offwind-dc,DE0 1
+DE0 2 offwind-dc,3159.658,offwind-dc,DE0 2
+DE0 0 onwind,8130.819038,onwind,DE0 0
+DE0 1 onwind,19560.425725,onwind,DE0 1
+DE0 2 onwind,25315.65825,onwind,DE0 2
+DE0 0 solar,18538.9741145,solar,DE0 0
+DE0 1 solar,16843.068297,solar,DE0 1
+DE0 2 solar,12522.998006,solar,DE0 2

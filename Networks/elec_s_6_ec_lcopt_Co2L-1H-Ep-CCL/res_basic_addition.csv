@@ -1,0 +1,17 @@
+,p_nom,carrier,bus
+DE0 3 offwind-ac,3136.562,offwind-ac,DE0 3
+DE0 4 offwind-ac,397.924,offwind-ac,DE0 4
+DE0 3 offwind-dc,3140.478,offwind-dc,DE0 3
+DE0 4 offwind-dc,395.644,offwind-dc,DE0 4
+DE0 0 onwind,2549.422295,onwind,DE0 0
+DE0 1 onwind,1535.436643,onwind,DE0 1
+DE0 2 onwind,5077.26738,onwind,DE0 2
+DE0 3 onwind,19540.61977,onwind,DE0 3
+DE0 4 onwind,16768.142625,onwind,DE0 4
+DE0 5 onwind,7536.0143,onwind,DE0 5
+DE0 0 solar,11992.310584,solar,DE0 0
+DE0 1 solar,7799.936151,solar,DE0 1
+DE0 2 solar,4949.179748,solar,DE0 2
+DE0 3 solar,7315.317402,solar,DE0 3
+DE0 4 solar,10343.145765,solar,DE0 4
+DE0 5 solar,5505.1507675,solar,DE0 5
