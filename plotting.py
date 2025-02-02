@@ -1,152 +1,348 @@
-# -*- coding: utf-8 -*-
 """
-Created on Sun May  10 02:18:04 2020
+plotting.py
 
-@author: anasi
-          name      color
-0         CCGT        red
-1         OCGT     salmon
-2      biomass  darkgreen
-3         coal     sienna
-4      lignite       gray
-5      nuclear    fuchsia
-6   offwind-ac     indigo
-7   offwind-dc       blue
-8          oil          k
-9       onwind     violet
-10         ror       cyan
-11       solar     orange
+This module contains functions for visualization and plotting of results, such as
+pie charts for generation mixes, bar charts for installations, and geographic maps
+of the PyPSA network.
 """
+
+import pypsa
+import glob
 import pandas as pd
 import matplotlib.pyplot as plt
-import yaml
-#import requests
-import json
-import pypsa
-import matplotlib as mpl
 import cartopy.crs as ccrs
+import matplotlib as mpl
 from matplotlib.offsetbox import AnchoredText
-import re
-import data
-from yaml import load, dump
-try:
-    from yaml import CLoader as Loader, CDumper as Dumper
-except ImportError:
-    from yaml import Loader, Dumper, FullLoader
-
-with open(r'config.yaml') as file:
-    # The FullLoader parameter handles the conversion from YAML
-    # scalar values to Python the dictionary format
-    config= yaml.load(file, Loader=yaml.FullLoader)
-    
-network_name=data.network_name
-
-name=network_name[:-3]
+import numpy as np
+import os
 
 def colors_map(data):
-    df=pd.DataFrame({'carrier':['CCGT','OCGT','biomass','coal','lignite','nuclear','offwind-ac',
-                                    'offwind-dc','oil','onwind','ror','solar','load'],
-                         'color':['#b20101','#d35050','#0c6013','#707070','#9e5a01','#ff9000','#6895dd','#74c6f2',
-                                  '#262626','#235ebc','#4adbc8','#f9d002','k']})
-
-#'color':['red','salmon','darkgreen','sienna','gray','fuchsia','indigo','blue',
-#                              'k','violet','cyan','orange']
-    c=[]
-    for i in range(len(data)):
-        c.append(list(df.color[df.carrier==data.index[i]])[0])
-    return c
+    df = pd.DataFrame({'carrier': [
+        'gas',
+        'CCGT',
+        'OCGT',
+        'biomass',
+        'coal',
+        'lignite',
+        'nuclear',
+        'offwind-ac',
+        'offwind-dc',
+        'oil',
+        'onwind',
+        'ror',
+        'solar',
+        'load',
+        'battery',
+        'H2',
+        'PHS',
+        'hydro',
+        'H2-local',
+        'H2-import',
+        'fuel cell',
+        'electrolysis',
+        'imports_exports'
+        'imports_exports_conv'
+        'imports_exports_res'],
+        'color': [
+        '#b20101',
+        '#b20101',
+        '#d35050',
+        '#0c6013',
+        '#707070',
+        '#9e5a01',
+        '#ff9000',
+        '#6895dd',
+        '#74c6f2',
+        '#262626',
+        '#235ebc',
+        '#4adbc8',
+        '#f9d002',
+        'k',
+        '#b8ea04',
+        '#ea048a',
+        '#08ad97',
+        '#08ad97',
+        '#08ad97',
+        'purple',
+        '#ea048a',
+        '#a31597',
+        '#0000FF']})
 
 def pie_exp(data):
-    df=pd.DataFrame({'carrier':['CCGT','OCGT','biomass','coal','lignite','nuclear','offwind-ac',
-                                    'offwind-dc','oil','onwind','ror','solar'],
-                         'exp':[0,0,0,0,0,0,0.1,0.1,0,0.1,0.1,0.1]})
+    df = pd.DataFrame({'carrier': ['gas', 'CCGT', 'OCGT', 'biomass',
+                                   'coal', 'lignite', 'nuclear', 'offwind-ac',
+                                   'offwind-dc', 'oil', 'onwind', 'ror',
+                                   'solar', 'H2-local', 'H2-import',
+                                   'fuel cell', 'electrolysis', 'imports_exports'],
+                         'exp':[0,0,0,0,0,0,0,0.1,0.1,0,
+                                0.1,0.1,0.1,0.1,0.1,
+                                0.1,0.1,0.1]})
     d=[]
     for i in range(len(data)):
         d.append(list(df.exp[df.carrier==data.index[i]])[0])
     return d
 
-def pie_chart(n,year):
-    p_by_carrier = pd.DataFrame(index=n.generators_t.p[n.generators.index [n.generators.carrier!='load']].columns, columns=['p_by_carrier'])
+def pie_chart(n,year,clusters):
+    """ 
+    Generates a pie chart of generation shares by carrier for the specified year.
+
+    Parameters:
+    -----------
+    n : Network
+        The network object containing generator data.
+    year : int
+        The year for which the generation shares are calculated.
+
+    Returns:
+    --------
+    float
+        The percentage of generation from renewable sources.
+    """
+    
+    p_by_carrier = pd.DataFrame(
+        index=n.generators_t.p[
+            n.generators.index [(n.generators.carrier!='load')
+                                &
+                           (n.generators.carrier!='H2')
+                           &
+                           (n.generators.carrier!='gas')
+                           & (n.generators.carrier!='imports_exports') 
+                           & (n.generators.carrier!= 'imports_exports_conv') 
+                           & (n.generators.carrier!= 'imports_exports_res')]].columns, 
+        columns=['p_by_carrier'])
     p_by_carrier.p_by_carrier= n.generators_t.p.sum()
     p_by_carrier.p_by_carrier*=int(8760/len(n.snapshots))
-
-    val=[]
-    typ=[]
-    for i in range(len(p_by_carrier)):
-        val.append(p_by_carrier.p_by_carrier[i])
-        typ.append(re.split('\s+', p_by_carrier.index[i])[len(re.split('\s+', p_by_carrier.index[i]))-1])
-    nnam=list(dict.fromkeys(typ))
-    new_gen= []
     
-    for i in range(len(nnam)): #TODO Automize colors 
-        x=0
-        for j in range(len(val)):
-            if typ[j]==nnam[i]:
-                x=x+val[j]
-        new_gen.append(x)
-
-    new_gen=pd.DataFrame(new_gen, columns=['gens'],index=nnam)
+    new_gen=pd.DataFrame(p_by_carrier.groupby(
+        n.generators.carrier).sum())
+    new_gen.columns=['gens']
     
-    colors = colors_map(new_gen)
-    explode = pie_exp(new_gen)
+    indices=[elem for elem in n.links.index if 'CCGT' in elem]
+    new_gen.loc['CCGT','gens']=n.links_t.p1[indices].sum().sum()*-1
+    indices=[elem for elem in n.links.index if 'OCGT' in elem]
+    new_gen.loc['OCGT','gens']=n.links_t.p1[indices].sum().sum()*-1
+    
+    
+    new_gen.loc['H2-import','gens']=n.generators_t.p[
+        n.generators.index[n.generators.carrier=='H2']].sum().sum()
+
+    indices=[elem for elem in n.links.index if 'electrolysis' in elem]
+    new_gen.loc['H2-local','gens']=n.links_t.p1[indices].sum().sum()*-1
+
     perc=(new_gen.loc['solar']+new_gen.loc['onwind']+new_gen.loc['offwind-ac']+
           new_gen.loc['offwind-dc']+new_gen.loc['ror'])/new_gen.sum()
+
+    new_gen=new_gen[(new_gen/new_gen.sum())>0.01].dropna()
+    
+
+    colors = colors_map(new_gen)
+    explode = pie_exp(new_gen)
     
     fig=plt.figure(figsize=(40, 10))
     plt.title('Generation shares year {} \n Renewables={}%'.format(year,round(perc*100,3)[0]),fontsize=20)
     patches, texts,junk = plt.pie(list(new_gen.gens),explode=explode, colors=colors,
                              autopct='%1.1f%%', shadow=True, startangle=140)
     plt.legend(patches, new_gen.index, loc="best")
-    plt.savefig('{}/All Generation year {}'.format(name,year), pi=1600, bbox_inches='tight')
-  #  plt.show()
+    directory = str(clusters)
+    plt.savefig(f'{directory}/All Generation year {year}', dpi=300, bbox_inches='tight')
+    plt.show()
     
 
     return round(perc*100,3)[0]
 
+def installed_capacities(n, year, clusters):
+    """
+    Calculates and plots the installed capacities by carrier for the specified year.
 
-def installed_capacities(n,year):
-    df=pd.DataFrame({'p_nom':n.generators.p_nom[n.generators.carrier!='load'],'carrier':n.generators.carrier[n.generators.carrier!='load']})
-    summation=df.groupby('carrier').sum()
-    shares=int(summation.loc['solar']+summation.loc['onwind']+
-               summation.loc['offwind-ac']+summation.loc['offwind-dc']+summation.loc['ror'])/sum(summation.p_nom)
+    Parameters:
+    -----------
+    n : Network
+        The network object containing generator and link data.
+    year : int
+        The year for which the installed capacities are calculated.
+
+    Returns:
+    --------
+    float
+        The percentage of installed capacity from renewable sources.
+    """
     
+    df = pd.DataFrame({
+        'p_nom': n.generators.p_nom[(n.generators.carrier != 'load') &
+                                    (n.generators.carrier != 'H2') &
+                                    (n.generators.carrier != 'gas') &
+                                    (n.generators.carrier != 'imports')],
+        'carrier': n.generators.carrier[(n.generators.carrier != 'load') &
+                                        (n.generators.carrier != 'H2') &
+                                        (n.generators.carrier != 'gas')&
+                                        (n.generators.carrier != 'imports') ]
+    })
+
+    df =df[~df['carrier'].str.startswith('imports_')]
+    
+    summation = df.groupby('carrier').sum()
+    
+    indices = [elem for elem in n.links.index if 'CCGT' in elem]
+    summation.loc['CCGT', 'p_nom'] = n.links.loc[indices, 'p_nom'].sum() * n.links.loc[indices, 'efficiency'].mean()
+    
+    indices = [elem for elem in n.links.index if 'OCGT' in elem]
+    summation.loc['OCGT', 'p_nom'] = n.links.loc[indices, 'p_nom'].sum() * n.links.loc[indices, 'efficiency'].mean()
+    
+    indices = [elem for elem in n.links.index if 'electrolysis' in elem]
+    summation.loc['electrolysis', 'p_nom'] = n.links.loc[indices, 'p_nom'].sum() * n.links.loc[indices, 'efficiency'].mean()
+    
+    indices = [elem for elem in n.links.index if 'fuel cell' in elem]
+    summation.loc['fuel cell', 'p_nom'] = n.links.loc[indices, 'p_nom'].sum() * n.links.loc[indices, 'efficiency'].mean()
+    
+    # Calculate share of renewables
+    shares = (summation.loc['solar'] + summation.loc['onwind'] +
+              summation.loc['offwind-ac'] + summation.loc['offwind-dc'] +
+              summation.loc['ror']) / sum(summation.p_nom)
+    
+    # Filter out small values for visualization
+    summation = summation[(summation / summation.sum()) > 0.01].dropna()
+    
+    # Plot pie chart
     colors = colors_map(summation)
     explode = pie_exp(summation)
-    fig=plt.figure(figsize=(40, 10))
+    fig = plt.figure(figsize=(40, 10))
     plt.title('Installed Capacity year {}\n Total= {} GW, Renewables={} %'.format(year,
-              round(sum(summation.p_nom)/1000,3), round(shares*100,3)),fontsize=20)
-    patches, texts,junk = plt.pie(list(summation.p_nom),explode=explode, colors=colors,
-                             autopct='%1.1f%%', shadow=True, startangle=140,textprops={'color':"w"})
+              round(sum(summation.p_nom) / 1000, 3), round(shares * 100, 3)), fontsize=20)
+    
+    patches, texts, junk = plt.pie(list(summation.p_nom), explode=explode, colors=colors,
+                                   autopct='%1.1f%%', shadow=True, startangle=140, textprops={'color': "w"})
     plt.legend(patches, summation.index, loc="best")
-    plt.savefig('{}/Installation Shares year {}'.format(name,year), pi=1600, bbox_inches='tight')
-   # plt.show()
-    
-    return round(shares*100,3)
 
+    directory = str(clusters)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
 
-def Gen_Bar(n,bar,year):
-    p_by_carrier = n.generators_t.p.sum()
-    val=[]
-    typ=[]
-    for i in range(len(p_by_carrier)):
-        val.append(p_by_carrier[i])
-        typ.append(re.split('\s+', p_by_carrier.index[i])[len(re.split('\s+', p_by_carrier.index[i]))-1])
-    nnam=list(dict.fromkeys(typ))
-    new_gen= []
     
-    for i in range(len(nnam)):
-        x=0
-        for j in range(len(val)):
-            if typ[j]==nnam[i]:
-                x=x+val[j]
-        new_gen.append(x)
+    # Save the figure
+    plt.savefig(f'{directory}/Installation_Shares_year_{year}.png', dpi=300, bbox_inches='tight')
+    plt.show()
     
-    new_gen=pd.DataFrame(new_gen, index=nnam)
-    for p in range(len(new_gen.index)):
-        bar.loc[year,new_gen.index[p]]=new_gen.loc[new_gen.index[p]][0]/10**6
+    return round(shares * 100, 3)
+
+def storage_installation(n,bar,year):
+    """ Updates the bar DataFrame with the installed storage capacities by carrier for the specified year.
+
+    Parameters:
+    -----------
+    n : Network
+        The network object containing storage unit data.
+    bar : pd.DataFrame
+        DataFrame to update with the storage installation data.
+    year : int
+        The year for which the storage capacities are being calculated and updated.
+
+    Returns:
+    --------
+    pd.DataFrame
+        Updated DataFrame with storage installation capacities by carrier.
+        """ 
+
+    stores=pd.DataFrame({'p_nom':n.storage_units.p_nom,'carrier':n.storage_units.carrier})
+    summation=stores.groupby('carrier').sum()
+    
+    
+    for p in range(len(summation.index)):
+        bar.loc[year,summation.index[p]]=summation.loc[summation.index[p]][0] ## in MW
+
+    bar=bar.sort_index(axis=0,ascending=True)
 
     return bar
+
+def Gen_Bar(n,bar,year):
+    """
+    Updates the bar DataFrame with generation data by energy carrier for the specified year.
+
+    This function calculates the generation for each carrier and updates the DataFrame with 
+    the values for CCGT, OCGT, hydrogen-ready, electrolysis, and fuel cell contributions.
+
+    Parameters:
+    -----------
+    n : Network
+        The network object containing generator and link data.
+    bar : pd.DataFrame
+        DataFrame to update with the generation data by carrier.
+    year : int
+        The year for which the generation data is calculated.
+
+    Returns:
+    --------
+    pd.DataFrame
+        Updated DataFrame with generation values by carrier for the specified year.
+        """
+    new_gen = n.generators_t.p.groupby(n.generators.carrier,axis=1).sum().sum()
     
+    
+    bar.loc[year]=abs(new_gen/1e6)
+
+    indices=[elem for elem in n.links.index if 'Gas_input' in elem]
+    bar.loc[year,'CCGT']=n.links_t.p1[indices].sum().sum()/-1e6
+
+    indices=[elem for elem in n.links.index if 'H2_input' in elem]
+    bar.loc[year,'H2-Ready']=n.links_t.p1[indices].sum().sum()/-1e6
+
+    indices=[elem for elem in n.links.index if 'OCGT' in elem]
+    bar.loc[year,'OCGT']=n.links_t.p1[indices].sum().sum()/-1e6
+
+    indices=[elem for elem in n.links.index if 'electrolysis' in elem]
+    bar.loc[year,'electrolysis']=n.links_t.p1[indices].sum().sum()/-1e6
+
+    indices=[elem for elem in n.links.index if 'fuel cell' in elem]
+    bar.loc[year,'fuel cell']=n.links_t.p1[indices].sum().sum()/-1e6
+
+    bar=abs(bar)
+
+    return bar
+
+def Gen_Bar(n,bar,year):
+    """
+    Updates the bar DataFrame with generation data by energy carrier for the specified year.
+
+    This function calculates the generation for each carrier and updates the DataFrame with 
+    the values for CCGT, OCGT, hydrogen-ready, electrolysis, and fuel cell contributions.
+
+    Parameters:
+    -----------
+    n : Network
+        The network object containing generator and link data.
+    bar : pd.DataFrame
+        DataFrame to update with the generation data by carrier.
+    year : int
+        The year for which the generation data is calculated.
+
+    Returns:
+    --------
+    pd.DataFrame
+        Updated DataFrame with generation values by carrier for the specified year.
+        """
+    new_gen = n.generators_t.p.groupby(n.generators.carrier,axis=1).sum().sum()
+    
+    
+    bar.loc[year]=abs(new_gen/1e6)
+
+    indices=[elem for elem in n.links.index if 'Gas_input' in elem]
+    bar.loc[year,'CCGT']=n.links_t.p1[indices].sum().sum()/-1e6
+
+    indices=[elem for elem in n.links.index if 'H2_input' in elem]
+    bar.loc[year,'H2-Ready']=n.links_t.p1[indices].sum().sum()/-1e6
+
+    indices=[elem for elem in n.links.index if 'OCGT' in elem]
+    bar.loc[year,'OCGT']=n.links_t.p1[indices].sum().sum()/-1e6
+
+    indices=[elem for elem in n.links.index if 'electrolysis' in elem]
+    bar.loc[year,'electrolysis']=n.links_t.p1[indices].sum().sum()/-1e6
+
+    indices=[elem for elem in n.links.index if 'fuel cell' in elem]
+    bar.loc[year,'fuel cell']=n.links_t.p1[indices].sum().sum()/-1e6
+
+    bar=abs(bar)
+
+    return bar
+
 def Inst_Bar(n,bar,year):
     
     df=pd.DataFrame({'p_nom':n.generators.p_nom[n.generators.carrier!='load'],'carrier':n.generators.carrier[n.generators.carrier!='load']})
@@ -156,10 +352,26 @@ def Inst_Bar(n,bar,year):
         bar.loc[year,summation.index[p]]=summation.loc[summation.index[p]][0]/10**3
 
     bar=bar.sort_index(axis=0,ascending=True)
+    
+    
+    indices=[elem for elem in n.links.index if 'CCGT' in elem]
+    bar.loc[year,'CCGT']=n.links.loc[indices,'p_nom'].sum() * n.links.loc[indices,'efficiency'].mean()/1e3
+
+    indices=[elem for elem in n.links.index if 'OCGT' in elem]
+    bar.loc[year,'OCGT']=n.links.loc[indices,'p_nom'].sum() * n.links.loc[indices,'efficiency'].mean()/1e3
+
+    indices=[elem for elem in n.links.index if 'H2_input' in elem]
+    bar.loc[year,'H2-Ready']=n.links.loc[indices,'p_nom'].sum() * n.links.loc[indices,'efficiency'].mean()/1e3
+
+    indices=[elem for elem in n.links.index if 'electrolysis' in elem]
+    bar.loc[year,'electrolysis']=n.links.loc[indices,'p_nom'].sum() * n.links.loc[indices,'efficiency'].mean()/1e3
+
+    indices=[elem for elem in n.links.index if 'fuel cell' in elem]
+    bar.loc[year,'fuel cell']=n.links.loc[indices,'p_nom'].sum() * n.links.loc[indices,'efficiency'].mean()/1e3
 
     return bar
 
-def Bar_to_PNG(n,bar,name,bar_type):
+def Bar_to_PNG(bar,name,bar_type):
     
 #    bar=bar.sort_index(axis=0,ascending=True)
     
@@ -177,28 +389,79 @@ def Bar_to_PNG(n,bar,name,bar_type):
         unit='TWh'
         bar*=int(8760/len(n.snapshots))
         bar= bar[ ['lignite','coal', 'oil'] + cols + ['ror','offwind-ac','offwind-dc','onwind','solar']] ##TODO: Check
-        colors = colors_map(pd.DataFrame(index=bar.columns))
 
     if bar_type =='Installation':
         unit='GW'
         bar= bar [ ['lignite','coal', 'oil'] + cols + ['ror','offwind-ac','offwind-dc','onwind','solar']]
-        colors = colors_map(pd.DataFrame(index=bar.columns))
 
-    if 'load' in list(bar.columns):
+    try: 
+        bar.drop('H2',axis=1,inplace=True)
+        bar.drop('gas',axis=1,inplace=True)
         bar.drop('load',axis=1,inplace=True)
 
+    except:
+        pass
+
+def Storage_Bar (bar,name):
+    colors = colors_map(pd.DataFrame(index=bar.columns))
     
+    ax = (bar/10e2).plot(figsize=(40, 10),kind='bar', stacked=True,color=colors,fontsize=15)
+    ax.set_xlabel("Years",fontsize=15)
+    ax.set_ylabel("Installation [GW]",fontsize=15)
+    ax.grid()
+    ax.set_title('Large Scale Storage in Germany',fontsize=30)
+    plt.savefig('{}/Storage Bar Plot '.format(str(int(len(n.buses)/4))), dpi=300, bbox_inches='tight')
+    bar.to_csv('{}/Storage_Bar.csv'.format(str(int(len(n.buses)/4))))
+
+
+def Generation_BarChart(name):
+    networks_names=(glob.glob("{}/*.nc".format(name)))
+    n=pypsa.Network(networks_names[0]) ### TODO: try a better way
+    carriers=list(dict.fromkeys(n.generators.carrier))
+    
+    years=[]
+    for i in networks_names:
+        years.append(i[-7:-3])
+    
+    bar= pd.DataFrame(index = years,columns=carriers)
+    
+    for k in range(len(networks_names)):    
+        n=pypsa.Network(networks_names[k]) 
+        p_by_carrier = n.generators_t.p.sum()
+        val=[]
+        typ=[]
+        for i in range(len(p_by_carrier)):
+            val.append(p_by_carrier[i])
+            typ.append(re.split('\s+', p_by_carrier.index[i])[len(re.split('\s+', p_by_carrier.index[i]))-1])
+        nnam=list(dict.fromkeys(typ))
+        new_gen= []
+        
+        for i in range(len(nnam)):
+            x=0
+            for j in range(len(val)):
+                if typ[j]==nnam[i]:
+                    x=x+val[j]
+            new_gen.append(x)
+        
+        new_gen=pd.DataFrame(new_gen, index=nnam)
+        
+        for p in range(len(new_gen.index)):
+            bar.loc[years[k],new_gen.index[p]]=new_gen.loc[new_gen.index[p]][0]/10**6
+    
+    bar=bar.sort_index(axis=0,ascending=True)
+    colors = colors_map(pd.DataFrame(index=bar.columns))
+
     ax = bar.plot(figsize=(40, 10),kind='bar', stacked=True,color=colors,fontsize=15)
     ax.set_xlabel("Years",fontsize=15)
-    ax.set_ylabel("{} [{}]".format(bar_type,unit),fontsize=15)
+    ax.set_ylabel("Generation [TWh]",fontsize=15)
     ax.grid()
-    ax.set_title('{} shares {}'.format(bar_type,name),fontsize=30)
-    plt.savefig('{}/{} Bar Plot {}'.format(name,bar_type,name), pi=1600, bbox_inches='tight')
-    bar.to_csv('{}/{}_Bar.csv'.format(name,bar_type))
+    ax.set_title('Generation shares {}'.format(name),fontsize=30)
+    plt.savefig('{}/Generation Bar Plot {}'.format(str(int(len(n.buses)/4)),name), dpi=300, bbox_inches='tight')
+    bar.to_csv('{}/Generation_Bar.csv'.format(str(int(len(n.buses)/4))))
 
-    
+    return bar
 
-def Country_Map(n,year):
+def Country_Map(n,year,config,clusters):
     opts = config['plotting']
     map_figsize = [10,10]#opts['map']['figsize']
     map_boundaries = opts['map']['boundaries']
@@ -207,8 +470,25 @@ def Country_Map(n,year):
     line_colors = {'cur': "purple",
                    'exp': mpl.colors.rgb2hex(to_rgba("red", 0.7), True)}
     tech_colors = opts['tech_colors']
-    bus_sizes = (n.generators.query('carrier != "load"').groupby(['bus', 'carrier']).p_nom.sum())
-    line_widths_exp =  n.lines.s_nom_opt[n.lines.s_nom_extendable==False]
+    gen_c=n.generators.copy()
+    gen_c.drop(n.generators.index[(n.generators.carrier=='load')
+                                  |(n.generators.carrier=='H2')|
+                                  (n.generators.carrier=='gas')|
+                                  (n.generators.carrier== 'imports_exports')|
+                                  (n.generators.carrier == 'imports_exports_conv')|
+                                  (n.generators.carrier == 'imports_exports_res')],inplace=True)
+    
+    indices=[elem for elem in n.links.index if 'CCGT' in elem]
+    indices.extend([elem for elem in n.links.index if 'OCGT' in elem])
+    links_c=n.links.loc[
+        indices,['bus1','p_nom','efficiency','carrier']].copy()
+    
+    links_c['p_nom']*=links_c['efficiency']
+    links_c.rename(columns={'bus1':'bus'},inplace=True)
+    
+    gen_c= pd.concat([gen_c,links_c])
+    bus_sizes = (gen_c.groupby(['bus', 'carrier']).p_nom.sum())
+    line_widths_exp =  n.lines.s_nom_opt
 
     attribute='p_nom'
     linewidth_factor = opts['map'][attribute]['linewidth_factor']
@@ -221,17 +501,16 @@ def Country_Map(n,year):
         car.append(i[1])
     txt=pd.DataFrame({'Bus':bus,'Carrier':car,'P':bus_sizes})
     txt.index=range(len(bus))
+    txt.drop(txt.index[(txt.Carrier=='H2')|(txt.Carrier=='gas')],inplace=True)
     
-    summation=txt.groupby('Bus').sum()
-    shares=txt.groupby('Carrier').sum()
-    res=(shares.P['solar']+shares.P['offwind-ac']+shares.P['offwind-dc']+shares.P['onwind']+shares.P['ror'])/shares.sum()[0]
+    # summation=txt.groupby('Bus').sum()
+    shares=txt.groupby('Carrier').P.sum()
+    res=(shares['solar']+shares['offwind-ac']+shares['offwind-dc']+shares['onwind'])/shares.sum()
     
 
     map_boundaries=[5,15,46,55]
     n_plo=n.copy()
-    for lin in list(n_plo.lines.index[n_plo.lines.s_nom_extendable==True]):        
-        n_plo.remove('Line', lin)
-    
+
     fig, ax = plt.subplots(figsize=map_figsize, subplot_kw={"projection": ccrs.PlateCarree()})
     n_plo.plot(line_widths=line_widths_exp/linewidth_factor,
                title='Installation Distribution, RES = {}%'.format(round(res*100,3)),
@@ -247,25 +526,39 @@ def Country_Map(n,year):
 #        ax.add_artist(AnchoredText("{}/n".format(shares.index[i]), loc=3,prop={'color':  colors_map(shares)[i]} ))
     ax.set_aspect('equal')
     ax.axis('off')
-    plt.savefig('{}/Installation Map {}'.format(name,year), pi=1600, bbox_inches='tight')
-#    plt.show()
+    directory = str(clusters)
+    plt.savefig(f'{directory}/Installation Map {year}', bbox_inches='tight')
+    plt.show()
 
-
-    #### Load
+def Installation_BarChart(name):
+    networks_names=(glob.glob("{}/*.nc".format(name)))
+    n=pypsa.Network(networks_names[0]) ### TODO: try a better way
+    years=[]
+    for i in networks_names:
+        years.append(i[-7:-3])
     
-    
-    
-    
-    fig,ax = plt.subplots(1,1,subplot_kw={"projection":ccrs.PlateCarree()})
-    fig.set_size_inches(6,6)
-    load_distribution = n.loads_t.p_set.mean()
-    n.plot(boundaries=map_boundaries,
-           geomap=True,color_geomap=True,
-           bus_sizes=load_distribution/bus_size_factor,
-           ax=ax,title="Average Load distribution")
-    ax.add_artist(AnchoredText("{}".format(year), loc=2))
-    plt.savefig('{}/Average Load distribution {}'.format(name,year), pi=1600, bbox_inches='tight')
-  #  plt.show()
+    df=pd.DataFrame({'p_nom':n.generators.p_nom,'carrier':n.generators.carrier})
+    summation=df.groupby('carrier').sum()
 
+    bar= pd.DataFrame(index = years,columns=summation.index)
+    
+    for k in range(len(networks_names)):
+    
+        n=pypsa.Network(networks_names[k]) 
+        df=pd.DataFrame({'p_nom':n.generators.p_nom,'carrier':n.generators.carrier})
+        summation=df.groupby('carrier').sum()
+        for p in range(len(summation.index)):
+            bar.loc[years[k],summation.index[p]]=summation.loc[summation.index[p]][0]/10**3
 
+    bar=bar.sort_index(axis=0,ascending=True)
+    colors = colors_map(pd.DataFrame(index=bar.columns))
+    ax = bar.plot(figsize=(40, 10),kind='bar', stacked=True,color=colors,fontsize=15)
+    ax.set_xlabel("Years",fontsize=15)
+    ax.set_ylabel("Installation [GW]",fontsize=15)
+    ax.grid()
+    ax.set_title('Installation shares {}'.format(name),fontsize=30)
+    plt.savefig('{}/Installation Bar Plot {}'.format(name,name), dpi=300, bbox_inches='tight')
+    
+    bar.to_csv('{}/Installation_Bar.csv'.format(str(int(len(n.buses)/4))))
 
+    return bar

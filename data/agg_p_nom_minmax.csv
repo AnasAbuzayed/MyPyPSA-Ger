@@ -3,7 +3,9 @@ DE,onwind,,50000
 DE,offwind-ac,,50000
 DE,solar,,50000
 DE,offwind-dc,,50000
-DE,CCGT,,6000
-DE,OCGT,,6000
-DE,H2,,22000
-DE,battery,,22000
+DE,battery,,40000
+DE,CCGT,,10000
+DE,OCGT,,14600
+DE,electrolysis,,62000
+DE,cell,,85000
+DE,H2_input,,6000
